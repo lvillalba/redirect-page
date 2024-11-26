@@ -3,23 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verificando...</title>
+  <title>Verificando tu correo...</title>
   <script>
     const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"; // Endpoint de Appwrite
     const APPWRITE_PROJECT_ID = "673b6c87001c3658d31e"; // Tu ID de proyecto
 
+    // Extraer parámetros de la URL
     const params = new URLSearchParams(window.location.search);
     const userId = params.get("userId");
     const token = params.get("secret");
 
     async function verifyEmail() {
       if (!userId || !token) {
-        document.getElementById("status").innerText = "Faltan parámetros en la URL.";
+        document.getElementById("status").innerText = "Parámetros inválidos en el enlace.";
         return;
       }
 
       try {
-        // Crear una sesión para que Appwrite reconozca al usuario
+        // Crear una sesión temporal con Appwrite
         const sessionResponse = await fetch(`${APPWRITE_ENDPOINT}/account/sessions`, {
           method: "POST",
           headers: {
@@ -36,7 +37,9 @@
           throw new Error("No se pudo crear la sesión.");
         }
 
-        // Completar la verificación
+        console.log("Sesión creada exitosamente.");
+
+        // Completar la verificación del correo
         const verificationResponse = await fetch(`${APPWRITE_ENDPOINT}/account/verification`, {
           method: "PUT",
           headers: {
@@ -46,12 +49,13 @@
           body: JSON.stringify({ userId, secret: token }),
         });
 
-        if (!verificationResponse.ok) {
-          throw new Error("Error al completar la verificación.");
+        if (verificationResponse.ok) {
+          document.getElementById("status").innerText =
+            "¡Correo verificado exitosamente! Ahora puedes cerrar esta ventana.";
+        } else {
+          const error = await verificationResponse.json();
+          throw new Error(error.message);
         }
-
-        document.getElementById("status").innerText =
-          "¡Correo verificado exitosamente! Ahora puedes cerrar esta ventana.";
       } catch (error) {
         console.error(error);
         document.getElementById("status").innerText =
@@ -65,6 +69,6 @@
 </head>
 <body>
   <h1>Verificando tu correo...</h1>
-  <p id="status">Por favor, espera mientras verificamos tu correo...</p>
+  <p id="status">Por favor, espera...</p>
 </body>
 </html>
