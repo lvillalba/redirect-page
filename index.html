@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificando tu correo...</title>
   <script>
-    const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"; // Endpoint de Appwrite
-    const APPWRITE_PROJECT_ID = "673b6c87001c3658d31e"; // Tu ID de proyecto
+    const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"; // URL del servidor Appwrite
+    const APPWRITE_PROJECT_ID = "673b6c87001c3658d31e"; // Reemplaza con tu Project ID
 
-    // Extraer parámetros de la URL
+    // Capturar los parámetros de la URL
     const params = new URLSearchParams(window.location.search);
     const userId = params.get("userId");
     const token = params.get("secret");
 
     async function verifyEmail() {
       if (!userId || !token) {
-        document.getElementById("status").innerText = "Parámetros inválidos en el enlace.";
+        document.getElementById("status").innerText = "Faltan parámetros en la URL.";
         return;
       }
 
       try {
-        // Crear una sesión temporal con Appwrite
+        // Crear una sesión temporal con el userId y token
         const sessionResponse = await fetch(`${APPWRITE_ENDPOINT}/account/sessions`, {
           method: "POST",
           headers: {
@@ -29,7 +29,7 @@
           },
           body: JSON.stringify({
             userId, // ID del usuario
-            secret: token, // Token único del usuario
+            secret: token, // Token secreto único
           }),
         });
 
@@ -49,13 +49,13 @@
           body: JSON.stringify({ userId, secret: token }),
         });
 
-        if (verificationResponse.ok) {
-          document.getElementById("status").innerText =
-            "¡Correo verificado exitosamente! Ahora puedes cerrar esta ventana.";
-        } else {
+        if (!verificationResponse.ok) {
           const error = await verificationResponse.json();
           throw new Error(error.message);
         }
+
+        document.getElementById("status").innerText =
+          "¡Correo verificado exitosamente! Ahora puedes cerrar esta ventana.";
       } catch (error) {
         console.error(error);
         document.getElementById("status").innerText =
