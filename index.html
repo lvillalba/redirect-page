@@ -5,28 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificando...</title>
   <script>
-    // Configuración de Appwrite
-    const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"; // Tu endpoint Appwrite
-    const APPWRITE_PROJECT_ID = "673b6c87001c3658d31e"; // Reemplaza con tu ID de proyecto
+    const APPWRITE_ENDPOINT = "https://cloud.appwrite.io/v1"; // Endpoint de Appwrite
+    const APPWRITE_PROJECT_ID = "673b6c87001c3658d31e"; // Tu ID de proyecto
 
-    // Extraer parámetros de la URL
     const params = new URLSearchParams(window.location.search);
     const userId = params.get("userId");
-    const token = params.get("token");
-
-       // Imprimir los valores en la consola
-    console.log("User ID:", userId);
-    console.log("Secret Token:", token);
+    const token = params.get("secret");
 
     async function verifyEmail() {
       if (!userId || !token) {
-        document.getElementById("status").innerText = "Error: Parámetros inválidos.";
+        document.getElementById("status").innerText = "Faltan parámetros en la URL.";
         return;
       }
 
-      // Llamar a Appwrite para completar la verificación
       try {
-        const response = await fetch(`${APPWRITE_ENDPOINT}/account/verification`, {
+        // Crear una sesión para que Appwrite reconozca al usuario
+        const sessionResponse = await fetch(`${APPWRITE_ENDPOINT}/account/sessions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Appwrite-Project": APPWRITE_PROJECT_ID,
+          },
+          body: JSON.stringify({
+            userId, // ID del usuario
+            secret: token, // Token único del usuario
+          }),
+        });
+
+        if (!sessionResponse.ok) {
+          throw new Error("No se pudo crear la sesión.");
+        }
+
+        // Completar la verificación
+        const verificationResponse = await fetch(`${APPWRITE_ENDPOINT}/account/verification`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -35,19 +46,16 @@
           body: JSON.stringify({ userId, secret: token }),
         });
 
-        if (response.ok) {
-          document.getElementById("status").innerText =
-            "¡Correo verificado exitosamente! Ahora puedes cerrar esta ventana.";
-        } else {
-          const error = await response.json();
-          console.error("Error:", error);
-          document.getElementById("status").innerText =
-            "Error al verificar el correo: " + error.message;
+        if (!verificationResponse.ok) {
+          throw new Error("Error al completar la verificación.");
         }
-      } catch (err) {
-        console.error(err);
+
         document.getElementById("status").innerText =
-          "Error al comunicarse con el servidor.";
+          "¡Correo verificado exitosamente! Ahora puedes cerrar esta ventana.";
+      } catch (error) {
+        console.error(error);
+        document.getElementById("status").innerText =
+          "Error al verificar el correo: " + error.message;
       }
     }
 
@@ -56,7 +64,7 @@
   </script>
 </head>
 <body>
-  <h1>Bienvenido! Estamos verificando tu correo...</h1>
-  <p id="status">Espere mientras verificamos tu correo.</p>
+  <h1>Verificando tu correo...</h1>
+  <p id="status">Por favor, espera mientras verificamos tu correo...</p>
 </body>
 </html>
