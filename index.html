@@ -14,6 +14,10 @@
     const userId = params.get("userId");
     const token = params.get("token");
 
+       // Imprimir los valores en la consola
+    console.log("User ID:", userId);
+    console.log("Secret Token:", token);
+
     async function verifyEmail() {
       if (!userId || !token) {
         document.getElementById("status").innerText = "Error: Parámetros inválidos.";
